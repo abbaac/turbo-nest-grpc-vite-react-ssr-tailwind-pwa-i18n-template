@@ -2,26 +2,31 @@ import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 //import { CreateUserDto } from './dto/create-user.dto';
 //import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto, PaginationDto, UpdateUserDto, Users } from '@common/hms-lib';
-import { User } from '@common/hms-lib';
 import { randomUUID } from 'crypto';
 import { Observable, Subject } from 'rxjs';
+import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService implements OnModuleInit{
   //static user data for demo purpose only
   private readonly users:User[] = [];
 
-  onModuleInit() {
-      for (let i=0; i <= 100; i++){
-        let createUserDto: CreateUserDto = {
-          primaryEmailAddress: `piosystems${i}@yahoo.co.uk`,
-          passwordHash: randomUUID(),
-          firstName: `Pio${i}`,
-          lastName: `Systems${i}`
-        }
-        this.create(createUserDto)
-      }
-  }
+  constructor(@InjectRepository(User) private readonly userRepository: Repository<User>){}
+
+
+  // onModuleInit() {
+  //     for (let i=0; i <= 100; i++){
+  //       let createUserDto: CreateUserDto = {
+  //         primaryEmailAddress: `piosystems${i}@yahoo.co.uk`,
+  //         passwordHash: randomUUID(),
+  //         firstName: `Pio${i}`,
+  //         lastName: `Systems${i}`
+  //       }
+  //       this.create(createUserDto)
+  //     }
+  // }
   create(createUserDto: CreateUserDto): User {
     const user:User = { //these should be from entity
       ...createUserDto,
