@@ -7,13 +7,13 @@ import { StaticRouter } from "react-router-dom/server";
 import AppWithNavDemo from "../../demo-frontend/src/AppWithNavDemo";
 //import AppWithNavDemo from "demo-frontend/src/AppWithNavDemo";
 import { Response } from 'express';
-import { initialContentMap as iCM } from './global/backend.settings';
-import { assetMap as aM } from './global/backend.settings';
+import { initialContentMap as iCM } from '../../../hms-apps/api-gateway/src/global/backend.settings';
+import { assetMap as aM } from '../../../hms-apps/api-gateway/src/global/backend.settings';
 import * as acceptLangParser from 'accept-language-parser';
 
 //import { join } from 'path';
 //import { I18nextProvider } from 'react-i18next';
-import { RequestExtended as Request } from './global/app.interfaces';
+import { RequestExtended as Request } from '../../../hms-apps/api-gateway/src/global/app.interfaces';
 
 @Controller()
 export class AppController {
