@@ -1,23 +1,37 @@
-/* eslint-disable prettier/prettier */
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 //import { CreateUserDto } from './dto/create-user.dto';
 //import { UpdateUserDto } from './dto/update-user.dto';
-import { User as UserProps} from '@common/hms-lib'; 
-import { CreateUserDto, PaginationDto, UpdateUserDto, Users} from '@common/hms-lib';
+import {
+  CreateUserDto,
+  PaginationDto,
+  UpdateUserDto,
+  Users,
+} from '@common/hms-lib';
+import { User as UserProps } from '@common/hms-lib';
+// import { randomUUID } from 'crypto';
 import { Observable, Subject } from 'rxjs';
-import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { FindOneOptions, Repository } from 'typeorm';
 
 @Injectable()
-export class UsersService{
-  //static user data for demo purpose only
-  // private readonly users:User[] = [];
-  
-constructor(@InjectRepository(User) 
-private readonly userRepository: Repository<User>){}
+export class UsersService {
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<UserProps> {
+    const user = await this.findOneUserByPrimaryEmailAddress(
+      createUserDto.primaryEmailAddress,
+    );
+
+    if (user) {
+      throw new Error('User already exists');
+    }
+
+    const newUser = this.userRepository.create(createUserDto);
+    const theuser = await this.userRepository.save(newUser);
+
     // const user:User = { //these should be from entity
     //   ...createUserDto,
     //   id: randomUUID(),
@@ -30,109 +44,98 @@ private readonly userRepository: Repository<User>){}
     //   isBackupEmailAddressVerified: false,
     //   passwordHash: randomUUID()
     // }
-
-    const user = await this.findOneUserByPrimaryEmailAddress(createUserDto.primaryEmailAddress);
-
-    if (user) {
-      throw new Error('User already exists');
-    }
-
-    const newUser = this.userRepository.create(createUserDto);
-    const theUser =  await this.userRepository.save(newUser);
+    // this.users.push(user);
 
     const userProps: UserProps = {
-      ...theUser,
-      passwordHash: "",
-      isBackupEmailAddressVerified: false,
+      ...theuser,
+      phone: {},
       isPrimaryEmailAddressVerified: false,
-      id: '',
-      backupEmailAddress: '',
-      phone: ''
-    }
+      isBackupEmailAddressVerified: false,
+    };
 
-    return userProps
+    return userProps;
   }
-
 
   async findAll(): Promise<Users> {
     const users = await this.userRepository.find();
 
     const userProps: UserProps[] = users.map((user) => ({
       ...user,
-      
-      phone: '',
+
+      phone: {},
       isPrimaryEmailAddressVerified: false,
       isBackupEmailAddressVerified: false,
-      backupEmailAddress: '',
     }));
 
-    return { users: userProps };
-  }
+    return { users: userProps };
+  }
 
   async findOne(id: string): Promise<UserProps> {
     // return this.users.find((user) => user.id === id);
-    const user = await this.userRepository.findOneBy({id});
+    const user = await this.userRepository.findOneBy({ id });
 
     const userProps: UserProps = {
       ...user,
-      
-      phone: '',
+
+      phone: {},
       isPrimaryEmailAddressVerified: false,
       isBackupEmailAddressVerified: false,
     };
 
-    return userProps;
-  }
+    return userProps;
+  }
 
-
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    const existingUser = await this.findOne(id);
-
-    if (!existingUser) {  
-      throw new Error("User not found by id ${id}");
-    }
-
-    // if (userIndex !== -1){
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserProps> {
+    // const userIndex = this.users.findIndex((user) => user.id === id);
+    // if (userIndex !== -1) {
     //   this.users[userIndex] = {
     //     ...this.users[userIndex],
-    //     ...updateUserDto
-    //   }
-    //   return this.users[userIndex]
+    //     ...updateUserDto,
+    //   };
+    //   return this.users[userIndex];
     // }
+    // throw new NotFoundException(User not found by id ${id});
 
-    Object.assign(existingUser, updateUserDto);
-    const newUser = await this.userRepository.save(existingUser);
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) {
+      throw new NotFoundException(`User not found by id ${id}`);
+    }
+
+    Object.assign(user, updateUserDto);
+    const newUser = await this.userRepository.save(user);
 
     const userProps: UserProps = {
       ...newUser,
-      phone: '',
+      phone: {},
       isPrimaryEmailAddressVerified: false,
       isBackupEmailAddressVerified: false,
     };
 
-    return userProps;
-
+    return userProps;
   }
 
-
-
   async remove(id: string): Promise<UserProps> {
+    // const userIndex = this.users.findIndex((user) => user.id === id);
+    // if (userIndex !== -1) {
+    //   return this.users.splice(userIndex)[0];
+    // }
+    // throw new NotFoundException(User not found by id ${id});
 
-    const user = await this.userRepository.findOneBy({id});
+    const user = await this.userRepository.findOneBy({ id });
     if (!user) {
-      throw new NotFoundException("User not found by id ${id}");
+      throw new NotFoundException(`User not found by id ${id}`);
     }
     const removedUser = await this.userRepository.remove(user);
 
     const userProps: UserProps = {
       ...removedUser,
-      phone: '',
+      phone: {},
       isPrimaryEmailAddressVerified: false,
       isBackupEmailAddressVerified: false,
     };
 
-    return userProps;
-  }
+    return userProps;
+  }
 
   queryUsers(
     paginationDtoStream: Observable<PaginationDto>,
@@ -142,7 +145,10 @@ private readonly userRepository: Repository<User>){}
       const start = paginationDto.page * paginationDto.skip;
       subject.next({
         // users: this.users.slice(start, start + paginationDto.skip),
-        users: (await this.findAll()).users.slice(start, start + paginationDto.skip)
+        users: (await this.findAll()).users.slice(
+          start,
+          start + paginationDto.skip,
+        ),
       });
     };
 
@@ -154,20 +160,20 @@ private readonly userRepository: Repository<User>){}
     });
 
     return subject.asObservable();
-  }
+  }
 
-async findOneUserByPrimaryEmailAddress(
-  primaryEmailAddress: string,
+  async findOneUserByPrimaryEmailAddress(
+    primaryEmailAddress: string,
   ): Promise<UserProps> {
     const user = await this.userRepository.findOneBy({ primaryEmailAddress });
 
     const userProps: UserProps = {
       ...user,
-      phone: '',
+      phone: {},
       isPrimaryEmailAddressVerified: false,
       isBackupEmailAddressVerified: false,
     };
 
-    return userProps;
-  }
+    return userProps;
+  }
 }
