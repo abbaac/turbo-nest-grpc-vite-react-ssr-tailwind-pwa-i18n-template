@@ -7,17 +7,24 @@ import { ClinicsModule } from './clinics/clinics.module';
 import { PharmaciesModule } from './pharmacies/pharmacies.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import {ServeStaticModule} from '@nestjs/serve-static'
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-// import {TypeOrmModule} from '@nestjs/typeorm'
-
 
 @Module({
   imports: [
     ServeStaticModule.forRoot({
-    rootPath: join(__dirname, '../../..', 'users-demo-frontend','dist'),
-  }), EmployeesModule, PatientsModule, ClinicsModule, PharmaciesModule, AuthModule, UsersModule],
+      rootPath: join(__dirname, '../../../..', 'users-demo-frontend', 'dist'),
+      exclude: ['/api*'],
+    }),
+    // TypeOrmModule.forRoot(typeOrmConfig),
+    EmployeesModule,
+    PatientsModule,
+    ClinicsModule,
+    PharmaciesModule,
+    AuthModule,
+    UsersModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule {}
