@@ -8,20 +8,21 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   imports: [
     UsersModule,
     TypeOrmModule.forRoot({
-      type:'postgres',
-      // port: 3306,
-      host: 'dpg-cm12u021hbls73adboq0-a.oregon-postgres.render.com',
-      username: 'silmsteam',
-      password: 'hkjW4V9LJ3DSUNxUHMviYlhZ5cys66WS',
+      type: 'mysql',
+      port: 3306,
+      host: 'localhost',
+      username: 'root',
+      password: 'root',
       database: 'hms',
       synchronize: true,
       autoLoadEntities: true,
+      logging: false, // Disable logging SQL queries
       ssl: {
         rejectUnauthorized: false, // Reject unauthorized SSL connections
-      },
-    })
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule {}
